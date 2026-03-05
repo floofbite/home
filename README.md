@@ -189,4 +189,4 @@ ports:
 
 ## 许可证
 
-[MIT](LICENSE)
+[MPL-2.0](LICENSE)
