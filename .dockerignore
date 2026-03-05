@@ -1,0 +1,12 @@
+*.tar
+*.zip
+*.tgz
+.gitignore
+.git
+/node_modules
+.vscode
+.idea
+/.next/
+.DS_Store
+.env
+.env.local

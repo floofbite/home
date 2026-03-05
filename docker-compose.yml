@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: account-center:latest
+    ports:
+      - "1742:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      CONFIG_SOURCE_DIR: /app/config/source
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./config/source:/app/config/source:ro
+    restart: unless-stopped

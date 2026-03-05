@@ -1,0 +1,69 @@
+serviceCategories:
+  - id: security
+    name: 安全工具
+    iconName: Shield
+    description: 密码管理和安全相关服务
+  - id: productivity
+    name: 生产力
+    iconName: FileText
+    description: 文档、笔记和协作工具
+  - id: storage
+    name: 存储与同步
+    iconName: Cloud
+    description: 文件存储和云同步服务
+  - id: development
+    name: 开发工具
+    iconName: Code
+    description: 开发和运维相关工具
+  - id: communication
+    name: 通讯
+    iconName: MessageSquare
+    description: 即时通讯和邮件服务
+
+services:
+  - id: vaultwarden
+    name: Vaultwarden
+    description: 个人密码管理器，安全存储您的所有密码
+    icon: /services/vaultwarden.svg
+    iconName: Shield
+    href: https://vault.certstone.cc
+    ping: https://vault.certstone.cc
+    category: security
+    isPopular: true
+  - id: outline
+    name: Outline
+    description: 团队知识库和文档协作平台
+    icon: /services/outline.svg
+    iconName: FileText
+    href: https://wiki.certstone.cc
+    category: productivity
+  - id: nextcloud
+    name: Nextcloud
+    description: 私有云存储和文件同步
+    icon: /services/nextcloud.svg
+    iconName: Cloud
+    href: https://cloud.certstone.cc
+    category: storage
+    isPopular: true
+  - id: portainer
+    name: Portainer
+    description: Docker 容器管理界面
+    icon: /services/portainer.svg
+    iconName: Database
+    href: https://docker.certstone.cc
+    category: development
+  - id: gitlab
+    name: GitLab
+    description: 代码托管和 CI/CD 平台
+    icon: /services/gitlab.svg
+    iconName: Code
+    href: https://git.certstone.cc
+    category: development
+    isNew: true
+  - id: mail
+    name: Webmail
+    description: 网页邮件客户端
+    icon: /services/mail.svg
+    iconName: Mail
+    href: https://mail.certstone.cc
+    category: communication
