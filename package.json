@@ -3,12 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "config:generate": "node scripts/generate-config.mjs",
-    "dev": "npm run config:generate && next dev --turbopack",
-    "build": "npm run config:generate && next build --turbopack",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
     "start": "cross-env NODE_ENV=production next start",
     "start:win": "$env:NODE_ENV='production'; next start",
-    "lint": "npm run config:generate && eslint"
+    "lint": "eslint"
   },
   "dependencies": {
     "@logto/api": "^1.37.1",

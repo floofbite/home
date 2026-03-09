@@ -1,23 +1,19 @@
 features:
-  # 邮箱更改配置
   emailChange:
     enabled: true
     config:
       requirePasswordVerification: true
 
-  # 手机号更改配置
   phoneChange:
     enabled: false
     config:
       requirePasswordVerification: true
 
-  # 用户名更改配置
   usernameChange:
     enabled: false
     config:
       requirePasswordVerification: true
 
-  # MFA 配置
   mfa:
     totp:
       enabled: true
@@ -26,15 +22,12 @@ features:
     webAuthn:
       enabled: true
 
-  # Passkey 配置
   passkey:
     enabled: true
 
-  # 社交账号连接
   socialIdentities:
     enabled: true
     config:
-      # connectors 为唯一配置来源：启用状态、展示信息、connectorId 都在这里管理
       connectors:
         - target: google
           connectorId: logto_google_connector_id
@@ -55,11 +48,9 @@ features:
           icon: qq
           description: 绑定 QQ 账号
 
-  # 会话管理
   sessions:
     enabled: true
 
-  # 账户删除
   accountDeletion:
     enabled: true
     config:

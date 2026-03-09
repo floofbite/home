@@ -129,7 +129,7 @@ interface RuntimeConfigData {
 }
 
 function resolveConfigDir(): string {
-  const dir = process.env.CONFIG_DIR ?? "config/source";
+  const dir = process.env.CONFIG_DIR ?? "deploy";
   if (isAbsolute(dir)) {
     return dir;
   }
@@ -161,13 +161,18 @@ function validateCrossReferences(
 function loadFromMountedConfig(configDir: string): RuntimeConfigData | null {
   const featuresFile = resolve(configDir, "features.yaml");
   const servicesFile = resolve(configDir, "services.yaml");
+  const featuresExampleFile = resolve(configDir, "features.yaml.example");
+  const servicesExampleFile = resolve(configDir, "services.yaml.example");
 
-  if (!existsSync(featuresFile) || !existsSync(servicesFile)) {
+  const resolvedFeaturesFile = existsSync(featuresFile) ? featuresFile : featuresExampleFile;
+  const resolvedServicesFile = existsSync(servicesFile) ? servicesFile : servicesExampleFile;
+
+  if (!existsSync(resolvedFeaturesFile) || !existsSync(resolvedServicesFile)) {
     return null;
   }
 
-  const featuresRaw = parseYamlFile(featuresFile);
-  const servicesRaw = parseYamlFile(servicesFile);
+  const featuresRaw = parseYamlFile(resolvedFeaturesFile);
+  const servicesRaw = parseYamlFile(resolvedServicesFile);
 
   const parsedFeatures = featuresYamlSchema.parse(featuresRaw);
   const parsedServices = servicesYamlSchema.parse(servicesRaw);
@@ -193,7 +198,7 @@ const runtimeData = loadFromMountedConfig(configDir);
 
 if (!runtimeData) {
   throw new Error(
-    `Runtime config not found in '${configDir}'. Required files: features.yaml, services.yaml`
+    `Runtime config not found in '${configDir}'. Required files: features.yaml/services.yaml (or .example variants)`
   );
 }
 
@@ -217,7 +222,7 @@ export function validateRuntimeConfig(): { configDir: string; configHash: string
   const mounted = loadFromMountedConfig(configDir);
   if (!mounted) {
     throw new Error(
-      `Runtime config not found in '${configDir}'. Required files: features.yaml, services.yaml`
+      `Runtime config not found in '${configDir}'. Required files: features.yaml/services.yaml (or .example variants)`
     );
   }
 

@@ -1,92 +1,196 @@
-# 配置指南（Runtime Config 版）
+# 配置指南（部署必读）
 
-本项目的 Docker 运行配置统一放在 `deploy/config/`，不再要求编辑 `config/source`。
+本指南专门说明三类配置：
 
-## 1. 目录结构
+1. `.env`（应用与 Logto 基础配置）
+2. `deploy/services.yaml`（服务门户的服务目录）
+3. `deploy/features.yaml`（账户中心功能开关）
 
-```text
-deploy/
-  config/
-    app.env
-    features.yaml
-    services.yaml
+---
+
+## 一、.env 怎么配（Logto + 应用基础）
+
+先复制模板：
+
+```bash
+cp .env.example .env
 ```
 
-容器内映射为 `/app/runtime-config/`。
-
----
-
-## 2. app.env
-
-示例模板：`deploy/config/app.env.example`
-
-核心变量：
+### 1) 必填项（不填会启动失败或无法登录）
 
 - `LOGTO_ENDPOINT`
+  - 你的 Logto 租户地址，例如：`https://your-tenant.logto.app`
 - `LOGTO_APP_ID`
+  - Logto 中 **Traditional Web** 应用的 App ID
 - `LOGTO_APP_SECRET`
+  - 上述应用的 App Secret
 - `LOGTO_COOKIE_SECRET`
-- `BASE_URL_PROD`
+  - 会话 cookie 加密密钥，建议 32 位以上随机字符串
 - `BASE_URL_DEV`
+  - 开发环境访问地址，例如：`http://localhost:3000`
+- `BASE_URL_PROD`
+  - 生产环境对外访问地址，例如：`https://account.example.com`
 - `LOGTO_M2M_CLIENT_ID`
+  - Logto 中 Machine-to-Machine 应用的 Client ID
 - `LOGTO_M2M_CLIENT_SECRET`
+  - 上述 M2M 应用的 Client Secret
 
-可选：
+### 2) 常用可选项
 
 - `SOCIAL_BINDING_CALLBACK_BASE_URL`
+  - 社交绑定回调域名强制覆盖项。
+  - 适用于反向代理/多域名场景，设置后社交绑定回调会固定到该域名。
+
+### 3) Node / 运行相关
+
+- `NODE_ENV`：建议生产为 `production`
+- 端口通常由容器环境变量控制（compose 中已设置）
 
 ---
 
-## 3. features.yaml
+## 二、services.yaml 怎么配（服务门户）
 
-用途：控制账户中心功能开关、社交连接器、资料字段配置。
+先复制模板：
 
-关键路径：
+```bash
+cp deploy/services.yaml.example deploy/services.yaml
+```
+
+### 1) 文件结构
+
+- `serviceCategories[]`：服务分类
+  - 字段：`id`, `name`, `iconName`, `description`
+- `services[]`：服务列表
+  - 字段：`id`, `name`, `description`, `icon`, `iconName`, `href`, `category`
+  - 可选：`ping`, `isNew`, `isPopular`
+
+### 2) 关键校验规则
+
+- `href` 必须是合法 URL
+- `ping`（如果填写）必须是合法 URL
+- 每个 `services[].category` 必须在 `serviceCategories[].id` 中存在
+
+### 3) 字段建议
+
+- `id`：稳定且唯一，后续尽量不要改
+- `icon`：前端静态资源路径，例如 `/services/gitlab.svg`
+- `ping`：如果需要状态探测可填写；不填则默认使用 `href`
+
+---
+
+## 三、features.yaml 怎么配（账户中心功能）
+
+先复制模板：
+
+```bash
+cp deploy/features.yaml.example deploy/features.yaml
+```
+
+### 1) 主要开关
 
 - `features.emailChange.enabled`
 - `features.phoneChange.enabled`
 - `features.usernameChange.enabled`
 - `features.sessions.enabled`
 - `features.accountDeletion.enabled`
-- `features.socialIdentities.config.connectors`
-- `profileFields.*`
+- `features.mfa.*.enabled`
+- `features.passkey.enabled`
+
+### 2) 社交连接器配置
+
+路径：`features.socialIdentities.config.connectors[]`
+
+每个 connector 常用字段：
+
+- `target`：平台标识（例如 `google` / `github` / `qq`）
+- `connectorId`：Logto 里该社交连接器的 ID
+- `enabled`：是否在 UI 中启用
+- `displayName` / `icon` / `description`：前端展示信息
+
+> 这里的 `connectorId` 是**必须和 Logto 后台对应**的关键字段。
+
+**需要注意的是，在第三方平台回调地址白名单中，除了Logto的回调地址外，还应该加上本项目的回调地址`/dashboard/connections/social/callback`**
+
+### 3) 资料字段配置
+
+路径：`profileFields.*`
+
+可配置：`enabled`, `label`, `description`, `placeholder`, `inputType`, `required`
 
 ---
 
-## 4. services.yaml
+## 四、多平台配置指引
 
-用途：门户服务分类与服务列表。
+这一部分对应你提到的“平台多、容易绕”的问题，按顺序配基本不会错。
 
-关键结构：
+### A. Logto 控制台
 
-- `serviceCategories[]`
-- `services[]`
+1. 创建或确认 **Traditional Web** 应用
+   - 取 `LOGTO_APP_ID` / `LOGTO_APP_SECRET`
+2. 创建或确认 **Machine-to-Machine** 应用
+   - 取 `LOGTO_M2M_CLIENT_ID` / `LOGTO_M2M_CLIENT_SECRET`
+3. 配置回调地址（Sign-in callback）
+   - 至少包含：`{你的域名}/callback`
+4. 如果启用社交连接：在 Logto 配置对应 social connector
+   - 获取 connectorId，填到 `features.yaml` 的 `socialIdentities.config.connectors[].connectorId`
 
-校验要求：
+### B. 第三方身份提供商（Google / GitHub / QQ 等）
 
-- `href` / `ping` 必须是合法 URL
-- `services[].category` 必须存在于 `serviceCategories[].id`
+1. 在对应平台创建 OAuth 应用
+2. 把 Logto 提供的回调地址（redirect URI）**和本项目的回调地址（`/dashboard/connections/social/callback`）**加入白名单
+3. 平台拿到的 clientId/clientSecret 填回 Logto connector 配置页
+4. 在本项目的 `features.yaml` 里启用对应 connector（`enabled: true`）并填对 `connectorId`
+
+### C. 本项目回调域名
+
+社交绑定流程会使用：
+
+`{应用域名}/dashboard/connections/social/callback?target=...`
+
+若你的网关/代理导致域名识别不稳定，建议显式设置：
+
+- `.env` 中设置 `SOCIAL_BINDING_CALLBACK_BASE_URL=https://你的域名`
 
 ---
 
-## 5. 生效方式
+## 五、Docker 使用说明（配置生效机制）
 
-修改配置后执行：
+容器启动时会：
+
+1. 读取 `/app/deploy/.env`
+2. 校验 `/app/deploy/features.yaml` + `/app/deploy/services.yaml`
+3. 启动应用
+
+配置修改后执行：
 
 ```bash
 docker compose restart app
 ```
 
-容器启动时会执行 runtime config 校验：
-
-- 缺少文件会失败
-- YAML 结构错误会失败
-- 服务分类引用错误会失败
-
 ---
 
-## 6. 与代码关系（最新架构）
+## 六、快速排错清单
 
-- Server 侧：运行时从 `CONFIG_DIR` 加载 YAML 并校验
-- Client 侧：通过 `/api/public-config` 获取公开配置
-- 不再建议在 client 组件直接引用 `config/generated/*`
+### 1) 登录失败
+
+先检查 `.env`：
+
+- `LOGTO_ENDPOINT`
+- `LOGTO_APP_ID`
+- `LOGTO_APP_SECRET`
+- `BASE_URL_DEV/BASE_URL_PROD`
+
+### 2) 社交绑定失败
+
+优先检查：
+
+- `features.yaml` 中 connector 的 `connectorId` 是否和 Logto 一致
+- 第三方平台 redirect URI 白名单是否完整
+- 是否设置了正确的 `SOCIAL_BINDING_CALLBACK_BASE_URL`
+
+### 3) 服务门户不显示或分类错乱
+
+检查 `services.yaml`：
+
+- `services[].category` 是否存在于 `serviceCategories[].id`
+- `href` / `ping` 是否是合法 URL

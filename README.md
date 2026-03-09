@@ -2,15 +2,23 @@
 
 基于 **Next.js 15（App Router）** + **Logto** 的账户中心与服务门户。
 
-## 功能概览
+## 一、配置约定
 
-- 账户中心：概览、个人资料、安全设置、社交连接、偏好设置
-- 服务门户：服务分类、搜索、健康状态探测
-- 认证：`@logto/next`（用户令牌）+ Management API（M2M）
+无论本地开发还是 Docker 部署，统一使用以下路径：
+
+- `/.env`
+- `/deploy/features.yaml`
+- `/deploy/services.yaml`
+
+仓库内仅提供示例文件：
+
+- `/.env.example`
+- `/deploy/features.yaml.example`
+- `/deploy/services.yaml.example`
 
 ---
 
-## 本地开发
+## 二、本地开发
 
 ### 1) 安装依赖
 
@@ -18,13 +26,19 @@
 npm install
 ```
 
-### 2) 准备环境变量
+### 2) 准备配置文件
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
+cp deploy/features.yaml.example deploy/features.yaml
+cp deploy/services.yaml.example deploy/services.yaml
 ```
 
-### 3) 启动
+### 3) 依据您的实际情况修改配置
+
+详见[docs/configuration-guide.md](docs/configuration-guide.md)。
+
+### 4) 启动
 
 ```bash
 npm run dev
@@ -34,32 +48,31 @@ npm run dev
 
 ---
 
-## Docker 部署
+## 三、Docker 部署
 
-### 配置目录
-
-宿主机目录：`./deploy/config`
-
-必须包含：
-
-- `app.env`
-- `features.yaml`
-- `services.yaml`
-
-初始化：
+### 1) 准备部署目录
 
 ```bash
-cp deploy/config/app.env.example deploy/config/app.env
-cp deploy/config/features.yaml.example deploy/config/features.yaml
-cp deploy/config/services.yaml.example deploy/config/services.yaml
+mkdir -p account-center/deploy
+cd account-center
 ```
 
-然后按需修改 `deploy/config/*`。
-
-### 启动
+### 2) 下载配置模板
 
 ```bash
-docker compose up -d --build
+curl -fsSL -o .env https://raw.githubusercontent.com/CertStone/logto-account-portal/main/.env.example
+curl -fsSL -o deploy/features.yaml https://raw.githubusercontent.com/CertStone/logto-account-portal/main/deploy/features.yaml.example
+curl -fsSL -o deploy/services.yaml https://raw.githubusercontent.com/CertStone/logto-account-portal/main/deploy/services.yaml.example
+curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/CertStone/logto-account-portal/main/docker-compose.yml
+```
+
+编辑 `.env` / `deploy/*.yaml` 后再启动。详见[docs/configuration-guide.md](docs/configuration-guide.md)。
+
+### 3) 启动
+
+```bash
+docker compose pull
+docker compose up -d
 ```
 
 查看日志：
@@ -68,34 +81,35 @@ docker compose up -d --build
 docker compose logs -f app
 ```
 
-访问：`http://localhost:1742`
+---
 
-### 配置变更生效
+## 四、项目功能
 
-修改 `deploy/config/*` 后：
+### 账户中心（Dashboard）
 
-```bash
-docker compose restart app
-```
+- 个人资料管理（头像、姓名、资料字段）
+- 安全设置（密码、MFA、Passkey、登录历史）
+- 社交账号绑定与解绑（Google/GitHub/QQ 等）
+- 会话管理与账户删除（可按 features 控制）
 
-容器启动时会执行配置校验，校验通过后直接启动应用。
+### 服务门户（Portal）
+
+- 服务分类导航
+- 关键词搜索
+- 服务可用性探测（通过 groupName/serviceName 的受控检查接口）
 
 ---
 
-## 配置说明
+## 五、项目特色
 
-详见：[docs/configuration-guide.md](docs/configuration-guide.md)
-
----
-
-## 生产建议
-
-- 使用强随机 `LOGTO_COOKIE_SECRET`
-- 生产环境使用反向代理开启 HTTPS
-- 最小化 M2M 权限
+- **统一配置模型**：开发与部署都使用 `.env + deploy/*.yaml`
+- **运行时配置加载**：无需 YAML 生成 TS，配置修改后重启容器即可生效
+- **配置校验内建**：容器启动前自动校验 env/yaml，减少线上配置错误
+- **认证边界清晰**：区分用户 Token 与 M2M Token，降低权限误用风险
+- **前后端解耦**：Client 通过 `/api/public-config` 获取公开配置
 
 ---
 
-## License
+## 六、配置说明
 
-[MPL-2.0](LICENSE)
+详见：`docs/configuration-guide.md`

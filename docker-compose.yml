@@ -1,17 +1,16 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # image: account-center:latest
+    image: "${IMAGE_REPO:-ghcr.io/CertStone/logto-account-portal}:${IMAGE_TAG:-latest}"
     ports:
       - "1742:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
-      CONFIG_DIR: /app/runtime-config
-      CONFIG_ENV_FILE: app.env
+      CONFIG_DIR: /app/deploy
+      CONFIG_ENV_FILE: .env
     volumes:
-      - ./deploy/config:/app/runtime-config:ro
+      - ./.env:/app/deploy/.env:ro
+      - ./deploy/features.yaml:/app/deploy/features.yaml:ro
+      - ./deploy/services.yaml:/app/deploy/services.yaml:ro
     restart: unless-stopped

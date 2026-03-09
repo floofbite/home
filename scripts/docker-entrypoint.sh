@@ -2,7 +2,7 @@
 set -eu
 
 APP_DIR="/app"
-CONFIG_DIR_DEFAULT="${APP_DIR}/runtime-config"
+CONFIG_DIR_DEFAULT="${APP_DIR}/deploy"
 
 : "${CONFIG_DIR:=${CONFIG_DIR_DEFAULT}}"
 : "${CONFIG_ENV_FILE:=app.env}"

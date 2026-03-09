@@ -1,5 +1,5 @@
 import { load as parseYaml } from "js-yaml";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { z } from "zod";
 
@@ -111,7 +111,7 @@ const servicesSchema = z
   .strict();
 
 function resolveConfigDir() {
-  const dir = process.env.CONFIG_DIR ?? "config/source";
+  const dir = process.env.CONFIG_DIR ?? "deploy";
   return isAbsolute(dir) ? dir : resolve(process.cwd(), dir);
 }
 
@@ -131,9 +131,20 @@ function validateCrossReferences(servicesConfig) {
 const configDir = resolveConfigDir();
 const featuresPath = resolve(configDir, "features.yaml");
 const servicesPath = resolve(configDir, "services.yaml");
+const featuresExamplePath = resolve(configDir, "features.yaml.example");
+const servicesExamplePath = resolve(configDir, "services.yaml.example");
 
-const parsedFeatures = featuresSchema.parse(parseYamlFile(featuresPath));
-const parsedServices = servicesSchema.parse(parseYamlFile(servicesPath));
+const resolvedFeaturesPath = existsSync(featuresPath) ? featuresPath : featuresExamplePath;
+const resolvedServicesPath = existsSync(servicesPath) ? servicesPath : servicesExamplePath;
+
+if (!existsSync(resolvedFeaturesPath) || !existsSync(resolvedServicesPath)) {
+  throw new Error(
+    `Runtime config missing in '${configDir}'. Required files: features.yaml/services.yaml (or .example variants)`
+  );
+}
+
+const parsedFeatures = featuresSchema.parse(parseYamlFile(resolvedFeaturesPath));
+const parsedServices = servicesSchema.parse(parseYamlFile(resolvedServicesPath));
 
 validateCrossReferences(parsedServices);
 
