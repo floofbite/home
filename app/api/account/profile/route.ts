@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { updateAccountInfo, getLogtoContext } from "@/lib/logto";
 import { ProfileUpdateSchema } from "@/lib/schemas";
-import { isFeatureEnabled } from "@/config/generated/features";
+import { isFeatureEnabled } from "@/config/features";
 import { logger } from "@/lib/logger";
 
 export async function PATCH(request: Request) {

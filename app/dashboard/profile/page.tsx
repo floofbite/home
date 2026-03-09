@@ -34,7 +34,12 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { AccountInfo } from "@/app/logto";
-import { profileFields, getEnabledProfileFields, isFeatureEnabled } from "@/config/generated/features";
+import type { FeaturesConfig } from "@/config/types";
+import {
+  getEnabledProfileFields as getEnabledProfileFieldsFromConfig,
+  isFeatureEnabled as isFeatureEnabledFromConfig,
+} from "@/lib/config/feature-helpers";
+import { usePublicConfig } from "@/hooks/use-public-config";
 import { accountCenterUrls, getAccountCenterSuccessType, clearAccountCenterSuccessParam } from "@/lib/logto-account-ui";
 
 // 图标映射
@@ -50,6 +55,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: runtimeConfig, loading: configLoading } = usePublicConfig();
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,6 +63,20 @@ export default function ProfilePage() {
   const [formStates, setFormStates] = useState<
     Record<string, { value: string; open: boolean; saving: boolean }>
   >({});
+
+  const runtimeFeatures = runtimeConfig?.features;
+  const runtimeProfileFields = runtimeConfig?.profileFields;
+
+  const isFeatureEnabled = useCallback(
+    (featureKey: keyof FeaturesConfig, subFeatureKey?: string): boolean => {
+      if (!runtimeFeatures) {
+        return false;
+      }
+
+      return isFeatureEnabledFromConfig(runtimeFeatures, featureKey, subFeatureKey);
+    },
+    [runtimeFeatures]
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -187,7 +207,7 @@ export default function ProfilePage() {
     }));
   };
 
-  if (loading) {
+  if (loading || (configLoading && !runtimeConfig)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -198,8 +218,10 @@ export default function ProfilePage() {
     );
   }
 
-  const enabledFields = getEnabledProfileFields().filter((f) => f.key !== "avatar");
-  const avatarConfig = profileFields.avatar;
+  const enabledFields = runtimeProfileFields
+    ? getEnabledProfileFieldsFromConfig(runtimeProfileFields).filter(({ key }) => key !== "avatar")
+    : [];
+  const avatarConfig = runtimeProfileFields?.avatar;
 
   return (
     <div className="space-y-6">
@@ -212,7 +234,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Avatar Card */}
-      {avatarConfig.enabled && (
+      {avatarConfig && avatarConfig.enabled && (
         <Card className="overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 p-6">
             <div className="flex flex-col items-center gap-4 sm:flex-row">

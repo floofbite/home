@@ -4,6 +4,6 @@ export {
   searchServices,
   serviceCategories,
   services,
-} from "@/config/generated/services";
+} from "@/lib/config/runtime-services";
 
 export type { Service, ServiceCategory } from "@/config/types";

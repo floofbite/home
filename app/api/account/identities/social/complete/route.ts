@@ -7,7 +7,7 @@ import {
   verifySocialVerification,
 } from "@/lib/logto";
 import { SocialCompleteSchema } from "@/lib/schemas";
-import { isFeatureEnabled } from "@/config/generated/features";
+import { isFeatureEnabled } from "@/config/features";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

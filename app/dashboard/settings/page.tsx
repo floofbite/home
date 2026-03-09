@@ -34,7 +34,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { isFeatureEnabled } from "@/config/generated/features";
+import type { FeaturesConfig } from "@/config/types";
+import { isFeatureEnabled as isFeatureEnabledFromConfig } from "@/lib/config/feature-helpers";
+import { usePublicConfig } from "@/hooks/use-public-config";
 import { signOutAction } from "@/app/actions/auth";
 
 // 语言存储 key
@@ -44,6 +46,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
+  const { data: runtimeConfig, loading: configLoading } = usePublicConfig();
   const [mounted, setMounted] = useState(false);
   const [language, setLanguage] = useState("zh-CN");
   const [isUpdatingLanguage, setIsUpdatingLanguage] = useState(false);
@@ -54,6 +57,19 @@ export default function SettingsPage() {
     confirmation: "",
     deleting: false,
   });
+
+  const runtimeFeatures = runtimeConfig?.features;
+
+  const isFeatureEnabled = useCallback(
+    (featureKey: keyof FeaturesConfig, subFeatureKey?: string): boolean => {
+      if (!runtimeFeatures) {
+        return false;
+      }
+
+      return isFeatureEnabledFromConfig(runtimeFeatures, featureKey, subFeatureKey);
+    },
+    [runtimeFeatures]
+  );
 
   // 避免水合不匹配，并从 localStorage 加载语言设置
   useEffect(() => {
@@ -143,6 +159,17 @@ export default function SettingsPage() {
       });
     }
   };
+
+  if (configLoading && !runtimeConfig) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">加载配置中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

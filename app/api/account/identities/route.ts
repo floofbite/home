@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { removeSocialIdentity, getLogtoContext, getSocialConnectors, getSocialIdentities } from "@/lib/logto";
 import { SocialUnlinkSchema } from "@/lib/schemas";
-import { isFeatureEnabled } from "@/config/generated/features";
+import { isFeatureEnabled } from "@/config/features";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

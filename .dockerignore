@@ -10,3 +10,8 @@
 .DS_Store
 .env
 .env.local
+!deploy/
+!deploy/config/
+!deploy/config/features.yaml
+!deploy/config/services.yaml
+!deploy/config/app.env.example

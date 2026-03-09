@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserLoginHistory, getLogtoContext } from "@/lib/logto";
-import { isFeatureEnabled } from "@/config/generated/features";
+import { isFeatureEnabled } from "@/config/features";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

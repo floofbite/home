@@ -2,11 +2,17 @@
 set -eu
 
 APP_DIR="/app"
-ENV_FILE="${APP_DIR}/.env"
+CONFIG_DIR_DEFAULT="${APP_DIR}/runtime-config"
+
+: "${CONFIG_DIR:=${CONFIG_DIR_DEFAULT}}"
+: "${CONFIG_ENV_FILE:=app.env}"
+
+ENV_FILE="${CONFIG_DIR}/${CONFIG_ENV_FILE}"
 
 cd "${APP_DIR}"
 
 echo "[entrypoint] Starting account-center container..."
+echo "[entrypoint] Runtime config directory: ${CONFIG_DIR}"
 
 if [ -f "${ENV_FILE}" ]; then
   echo "[entrypoint] Loading environment from ${ENV_FILE}"
@@ -15,18 +21,18 @@ if [ -f "${ENV_FILE}" ]; then
   . "${ENV_FILE}"
   set +a
 else
-  echo "[entrypoint] No .env file mounted at ${ENV_FILE}, using existing environment variables"
+  echo "[entrypoint] No env file at ${ENV_FILE}, using existing environment variables"
 fi
 
 : "${NODE_ENV:=production}"
 : "${PORT:=3000}"
 : "${HOSTNAME:=0.0.0.0}"
-: "${CONFIG_SOURCE_DIR:=/app/config/source}"
+: "${CONFIG_DIR:=${CONFIG_DIR_DEFAULT}}"
 
-export NODE_ENV PORT HOSTNAME CONFIG_SOURCE_DIR
+export NODE_ENV PORT HOSTNAME CONFIG_DIR
 
-SERVICES_CONFIG="${CONFIG_SOURCE_DIR}/services.yaml"
-FEATURES_CONFIG="${CONFIG_SOURCE_DIR}/features.yaml"
+SERVICES_CONFIG="${CONFIG_DIR}/services.yaml"
+FEATURES_CONFIG="${CONFIG_DIR}/features.yaml"
 
 if [ ! -f "${SERVICES_CONFIG}" ]; then
   echo "[entrypoint] Missing services config: ${SERVICES_CONFIG}" >&2
@@ -38,11 +44,8 @@ if [ ! -f "${FEATURES_CONFIG}" ]; then
   exit 1
 fi
 
-echo "[entrypoint] Generating runtime config from ${CONFIG_SOURCE_DIR}"
-npm run config:generate
-
-echo "[entrypoint] Building Next.js app"
-npm run build
+echo "[entrypoint] Validating runtime config"
+node ./scripts/validate-runtime-config.mjs
 
 echo "[entrypoint] Starting Next.js server on ${HOSTNAME}:${PORT}"
-exec ./node_modules/.bin/next start -H "${HOSTNAME}" -p "${PORT}"
+exec node ./server.js

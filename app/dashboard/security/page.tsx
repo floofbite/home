@@ -19,7 +19,9 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { AccountInfo, LoginHistoryRecord, MfaVerification } from "@/lib/logto";
-import { isFeatureEnabled } from "@/config/generated/features";
+import type { FeaturesConfig } from "@/config/types";
+import { isFeatureEnabled as isFeatureEnabledFromConfig } from "@/lib/config/feature-helpers";
+import { usePublicConfig } from "@/hooks/use-public-config";
 import { accountCenterUrls, getAccountCenterSuccessType, clearAccountCenterSuccessParam } from "@/lib/logto-account-ui";
 
 // 只显示最近 7 天的登录记录，最多 10 条
@@ -29,10 +31,24 @@ const MAX_LOGIN_HISTORY_ITEMS = 10;
 export default function SecurityPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: runtimeConfig, loading: configLoading } = usePublicConfig();
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [loginHistory, setLoginHistory] = useState<LoginHistoryRecord[]>([]);
   const [mfaVerifications, setMfaVerifications] = useState<MfaVerification[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const runtimeFeatures = runtimeConfig?.features;
+
+  const isFeatureEnabled = useCallback(
+    (featureKey: keyof FeaturesConfig, subFeatureKey?: string): boolean => {
+      if (!runtimeFeatures) {
+        return false;
+      }
+
+      return isFeatureEnabledFromConfig(runtimeFeatures, featureKey, subFeatureKey);
+    },
+    [runtimeFeatures]
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -77,7 +93,7 @@ export default function SecurityPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, isFeatureEnabled]);
 
   // 检查 Account Center 返回的成功提示
   useEffect(() => {
@@ -149,7 +165,7 @@ export default function SecurityPage() {
 
   const mfaStatus = getMfaStatus();
 
-  if (loading) {
+  if (loading || (configLoading && !runtimeConfig)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">

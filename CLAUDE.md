@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Docker (host-mapped config)
 
 - First start / rebuild image: `docker compose up -d --build`
-- Restart app after editing mapped config files: `docker compose restart app`
+- Restart app after editing runtime config files: `docker compose restart app`
 - View logs: `docker compose logs -f app`
 
 ### Tests
@@ -61,17 +61,18 @@ The app intentionally uses two token types:
 
 When changing auth behavior, keep this boundary explicit instead of mixing all operations into M2M.
 
-## Config Pipeline (critical)
+## Config Runtime (critical)
 
-Config is source-controlled in YAML and transformed to TypeScript before dev/build/lint:
+Config is loaded at runtime from mounted YAML and validated on startup:
 
-- Source files: `config/source/services.yaml`, `config/source/features.yaml`
-- Generator: `scripts/generate-config.mjs`
-- Generated files: `config/generated/services.ts`, `config/generated/features.ts`
-- Runtime imports should come from `config/services.ts` and `config/features.ts` (re-export layer)
+- Runtime source files (Docker): `/app/runtime-config/services.yaml`, `/app/runtime-config/features.yaml`
+- Runtime validator: `scripts/validate-runtime-config.mjs`
+- Runtime loader: `lib/config/runtime-config.ts`
+- Stable imports: `config/services.ts` and `config/features.ts`
+- Public client config endpoint: `/api/public-config`
 - Navigation config: `config/navigation.ts` (shared between Sidebar and Navbar)
 
-`generate-config.mjs` also supports `CONFIG_SOURCE_DIR` override, which is used by Docker to point at mounted host config.
+`CONFIG_DIR` can override the runtime config directory (default: `config/source` in local non-Docker execution).
 
 ## Request / Rendering Flow
 
@@ -79,7 +80,7 @@ Config is source-controlled in YAML and transformed to TypeScript before dev/bui
 - Client pages in dashboard call internal API routes (`/api/account-*`, `/api/account/*`) instead of calling Logto directly from browser.
 - Route handlers generally:
   1. verify authentication via `getLogtoContext()`
-  2. enforce feature gates from `config/generated/features`
+  2. enforce feature gates from `config/features`
   3. delegate to helpers in `lib/logto/`
   4. validate request body with Zod schemas from `lib/schemas.ts`
 
@@ -92,11 +93,11 @@ Config is source-controlled in YAML and transformed to TypeScript before dev/bui
 
 ## Docker Runtime Notes
 
-Current Docker flow is runtime-build oriented (not prebuilt standalone copy):
+Current Docker flow is image-first + runtime-config oriented:
 
 - Entrypoint: `scripts/docker-entrypoint.sh`
-- On container start it loads `/app/.env`, validates `/app/config/source/*.yaml`, runs config generation, runs `next build`, then starts server.
-- Compose maps host files (`.env`, `config/source/*`), so config changes are applied by container restart.
+- On container start it loads `/app/runtime-config/app.env`, validates `/app/runtime-config/*.yaml`, then starts the standalone server.
+- Compose maps host directory `deploy/config` to `/app/runtime-config`, so config changes are applied by container restart.
 
 ## Environment Variables
 
@@ -106,7 +107,7 @@ See `.env.example` for full list. Core variables used across auth and runtime:
 - `BASE_URL_DEV`, `BASE_URL_PROD`
 - `LOGTO_M2M_CLIENT_ID`, `LOGTO_M2M_CLIENT_SECRET`
 - Optional social connector IDs and `LOGTO_AVAILABLE_CONNECTORS`
-- Optional `CONFIG_SOURCE_DIR` (used by config generator / Docker entrypoint)
+- Optional `CONFIG_DIR` (runtime config directory used by Docker/runtime loader)
 - Optional `LOG_LEVEL` (debug, info, warn, error)
 - Optional `DISABLE_LOGGING` (set to "true" to disable all logging)
 

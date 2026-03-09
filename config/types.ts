@@ -70,3 +70,11 @@ export interface ProfileFieldsConfig {
   locale: ProfileFieldConfig;
   website: ProfileFieldConfig;
 }
+
+export interface PublicRuntimeConfig {
+  features: FeaturesConfig;
+  profileFields: ProfileFieldsConfig;
+  serviceCategories: ServiceCategory[];
+  services: Service[];
+  configHash: string;
+}

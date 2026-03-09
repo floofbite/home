@@ -6,7 +6,7 @@
 import { createManagementApi } from "@logto/api/management";
 import { logger } from "@/lib/logger";
 import { logtoConfig, managementAPIConfig } from "./config";
-import { features } from "@/config/generated/features";
+import { features } from "@/config/features";
 import { getAccessTokenRSC, getLogtoContext } from "./client";
 import type {
   AllIdentitiesResponse,

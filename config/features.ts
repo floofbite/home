@@ -3,7 +3,7 @@ export {
   getEnabledProfileFields,
   isFeatureEnabled,
   profileFields,
-} from "@/config/generated/features";
+} from "@/lib/config/runtime-features";
 
 export type {
   FeatureConfig,

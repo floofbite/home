@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ServiceCard } from "@/components/portal/service-card";
-import { services, serviceCategories } from "@/config/generated/services";
 import { Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePublicConfig } from "@/hooks/use-public-config";
+import type { Service, ServiceCategory } from "@/config/types";
 
 // 服务状态类型
 type ServiceStatus = "unknown" | "online" | "offline" | "checking";
@@ -21,31 +22,49 @@ interface ServiceHealth {
 export default function PortalPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceHealth, setServiceHealth] = useState<Record<string, ServiceHealth>>({});
+  const { data: runtimeConfig, loading: configLoading } = usePublicConfig();
+
+  const runtimeServices = useMemo<Service[]>(
+    () => runtimeConfig?.services ?? [],
+    [runtimeConfig]
+  );
+  const runtimeCategories = useMemo<ServiceCategory[]>(
+    () => runtimeConfig?.serviceCategories ?? [],
+    [runtimeConfig]
+  );
+
+  const categoryNameById = useMemo(
+    () => new Map(runtimeCategories.map((category) => [category.id, category.name])),
+    [runtimeCategories]
+  );
 
   // 按分类组织服务
   const servicesByCategory = useMemo(() => {
-    return serviceCategories
+    return runtimeCategories
       .map((category) => ({
         ...category,
-        services: services.filter((s) => s.category === category.id),
+        services: runtimeServices.filter((s) => s.category === category.id),
       }))
       .filter((c) => c.services.length > 0);
-  }, []);
+  }, [runtimeCategories, runtimeServices]);
 
   // 根据搜索过滤服务
   const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return services;
+    if (!searchQuery.trim()) return runtimeServices;
+
     const query = searchQuery.toLowerCase();
-    return services.filter(
-      (s) =>
+    return runtimeServices.filter((s) => {
+      const categoryName = categoryNameById.get(s.category) ?? s.category;
+      return (
         s.name.toLowerCase().includes(query) ||
         s.description.toLowerCase().includes(query) ||
-        s.category.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+        categoryName.toLowerCase().includes(query)
+      );
+    });
+  }, [searchQuery, runtimeServices, categoryNameById]);
 
   // 检查单个服务状态
-  const checkServiceHealth = useCallback(async (serviceId: string, pingUrl: string) => {
+  const checkServiceHealth = useCallback(async (serviceId: string, groupName: string, serviceName: string) => {
     setServiceHealth((prev) => ({
       ...prev,
       [serviceId]: { status: "checking" },
@@ -57,9 +76,12 @@ export default function PortalPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`/api/health-check?url=${encodeURIComponent(pingUrl)}`, {
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `/api/health-check?groupName=${encodeURIComponent(groupName)}&serviceName=${encodeURIComponent(serviceName)}`,
+        {
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeoutId);
       const latency = Date.now() - startTime;
@@ -85,23 +107,39 @@ export default function PortalPage() {
 
   // 检查所有服务状态
   const checkAllServices = useCallback(() => {
-    services.forEach((service) => {
-      if (service.ping) {
-        checkServiceHealth(service.id, service.ping);
+    runtimeServices.forEach((service) => {
+      const groupName = categoryNameById.get(service.category);
+      if (groupName) {
+        checkServiceHealth(service.id, groupName, service.name);
       }
     });
-  }, [checkServiceHealth]);
+  }, [runtimeServices, categoryNameById, checkServiceHealth]);
 
   // 页面加载时检查服务状态
   useEffect(() => {
+    if (runtimeServices.length === 0) {
+      return;
+    }
+
     checkAllServices();
     // 每 60 秒自动刷新一次
     const interval = setInterval(checkAllServices, 60000);
     return () => clearInterval(interval);
-  }, [checkAllServices]);
+  }, [checkAllServices, runtimeServices]);
 
   const hasSearch = searchQuery.trim().length > 0;
-  const hasPopular = services.some((s) => s.isPopular);
+  const hasPopular = runtimeServices.some((s) => s.isPopular);
+
+  if (configLoading && !runtimeConfig) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">加载服务配置中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -179,7 +217,7 @@ export default function PortalPage() {
                 <h2 className="text-lg font-semibold">常用服务</h2>
               </div>
               <div className="grid items-stretch gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {services
+                {runtimeServices
                   .filter((s) => s.isPopular)
                   .map((service) => (
                     <ServiceCard
@@ -225,7 +263,7 @@ export default function PortalPage() {
               </Button>
             </div>
             <div className="grid items-stretch gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {services.map((service) => (
+              {runtimeServices.map((service) => (
                 <ServiceCard
                   key={service.id}
                   service={service}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createSocialVerification, getLogtoContext, getSocialConnectorByTarget } from "@/lib/logto";
 import { SocialStartSchema } from "@/lib/schemas";
-import { isFeatureEnabled } from "@/config/generated/features";
+import { isFeatureEnabled } from "@/config/features";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

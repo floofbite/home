@@ -1,0 +1,142 @@
+import { load as parseYaml } from "js-yaml";
+import { readFileSync } from "node:fs";
+import { isAbsolute, resolve } from "node:path";
+import { z } from "zod";
+
+const featureConfigSchema = z
+  .object({
+    enabled: z.boolean(),
+    config: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+
+const profileFieldSchema = z
+  .object({
+    enabled: z.boolean(),
+    label: z.string().min(1),
+    description: z.string().min(1),
+    placeholder: z.string().min(1).optional(),
+    inputType: z.enum(["text", "date", "url"]).optional(),
+    required: z.boolean().optional(),
+  })
+  .strict();
+
+const socialConnectorSchema = z
+  .object({
+    target: z.string().min(1),
+    connectorId: z.string().min(1).optional(),
+    enabled: z.boolean(),
+    displayName: z.string().min(1).optional(),
+    icon: z.string().min(1).optional(),
+    description: z.string().min(1).optional(),
+  })
+  .strict();
+
+const featuresSchema = z
+  .object({
+    features: z
+      .object({
+        emailChange: featureConfigSchema,
+        phoneChange: featureConfigSchema,
+        usernameChange: featureConfigSchema,
+        mfa: z
+          .object({
+            totp: featureConfigSchema,
+            backupCodes: featureConfigSchema,
+            webAuthn: featureConfigSchema,
+          })
+          .strict(),
+        passkey: featureConfigSchema,
+        socialIdentities: z
+          .object({
+            enabled: z.boolean(),
+            config: z
+              .object({
+                connectors: z.array(socialConnectorSchema).optional(),
+              })
+              .passthrough()
+              .optional(),
+          })
+          .strict(),
+        sessions: featureConfigSchema,
+        accountDeletion: featureConfigSchema,
+      })
+      .strict(),
+    profileFields: z
+      .object({
+        avatar: profileFieldSchema,
+        name: profileFieldSchema,
+        birthdate: profileFieldSchema,
+        zoneinfo: profileFieldSchema,
+        locale: profileFieldSchema,
+        website: profileFieldSchema,
+      })
+      .strict(),
+  })
+  .strict();
+
+const servicesSchema = z
+  .object({
+    serviceCategories: z
+      .array(
+        z
+          .object({
+            id: z.string().min(1),
+            name: z.string().min(1),
+            iconName: z.string().min(1),
+            description: z.string().min(1),
+          })
+          .strict()
+      )
+      .min(1),
+    services: z
+      .array(
+        z
+          .object({
+            id: z.string().min(1),
+            name: z.string().min(1),
+            description: z.string().min(1),
+            icon: z.string().min(1),
+            iconName: z.string().min(1),
+            href: z.string().url(),
+            ping: z.string().url().optional(),
+            category: z.string().min(1),
+            isNew: z.boolean().optional(),
+            isPopular: z.boolean().optional(),
+          })
+          .strict()
+      )
+      .min(1),
+  })
+  .strict();
+
+function resolveConfigDir() {
+  const dir = process.env.CONFIG_DIR ?? "config/source";
+  return isAbsolute(dir) ? dir : resolve(process.cwd(), dir);
+}
+
+function parseYamlFile(filePath) {
+  return parseYaml(readFileSync(filePath, "utf8"));
+}
+
+function validateCrossReferences(servicesConfig) {
+  const categoryIds = new Set(servicesConfig.serviceCategories.map((item) => item.id));
+  for (const service of servicesConfig.services) {
+    if (!categoryIds.has(service.category)) {
+      throw new Error(`Service '${service.id}' references missing category '${service.category}'`);
+    }
+  }
+}
+
+const configDir = resolveConfigDir();
+const featuresPath = resolve(configDir, "features.yaml");
+const servicesPath = resolve(configDir, "services.yaml");
+
+const parsedFeatures = featuresSchema.parse(parseYamlFile(featuresPath));
+const parsedServices = servicesSchema.parse(parseYamlFile(servicesPath));
+
+validateCrossReferences(parsedServices);
+
+console.log(`[runtime-config] Validation successful. dir=${configDir}`);
+console.log(`[runtime-config] services=${parsedServices.services.length}, categories=${parsedServices.serviceCategories.length}`);
+console.log(`[runtime-config] profileFields=${Object.keys(parsedFeatures.profileFields).length}`);

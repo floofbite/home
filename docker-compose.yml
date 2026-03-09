@@ -10,8 +10,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
-      CONFIG_SOURCE_DIR: /app/config/source
+      CONFIG_DIR: /app/runtime-config
+      CONFIG_ENV_FILE: app.env
     volumes:
-      - ./.env:/app/.env:ro
-      - ./config/source:/app/config/source:ro
+      - ./deploy/config:/app/runtime-config:ro
     restart: unless-stopped

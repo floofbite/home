@@ -1,168 +1,92 @@
-# 配置文件编写指南
+# 配置指南（Runtime Config 版）
 
-本文档说明本项目所有可编辑配置文件的用途、字段规范和常见注意事项。
+本项目的 Docker 运行配置统一放在 `deploy/config/`，不再要求编辑 `config/source`。
 
-## 1. 配置文件总览
+## 1. 目录结构
 
-| 文件 | 用途 |
-| --- | --- |
-| `.env` / `.env.local` | 运行时环境变量（Logto、回调域名、M2M 凭据等） |
-| `config/source/features.yaml` | 账户中心功能开关、社交连接器、资料字段配置 |
-| `config/source/services.yaml` | 门户服务分类与服务清单 |
+```text
+deploy/
+  config/
+    app.env
+    features.yaml
+    services.yaml
+```
 
-> `config/generated/*.ts` 为自动生成文件，不要手改。修改源配置后请执行 `npm run config:generate`（`npm run dev/lint/build` 已自动包含）。
+容器内映射为 `/app/runtime-config/`。
 
 ---
 
-## 2. 环境变量配置（.env / .env.local）
+## 2. app.env
 
-建议至少配置以下字段：
+示例模板：`deploy/config/app.env.example`
 
-- `LOGTO_ENDPOINT`：Logto 租户地址（如 `https://xxx.logto.app`）
-- `LOGTO_APP_ID` / `LOGTO_APP_SECRET`：Logto 应用凭据
-- `LOGTO_COOKIE_SECRET`：Cookie 加密密钥（建议 >= 32 字符）
-- `BASE_URL_DEV` / `BASE_URL_PROD`：应用在开发/生产环境对外访问地址
-- `LOGTO_M2M_CLIENT_ID` / `LOGTO_M2M_CLIENT_SECRET`：Management API 所需
+核心变量：
 
-### 社交绑定回调域名（关键）
+- `LOGTO_ENDPOINT`
+- `LOGTO_APP_ID`
+- `LOGTO_APP_SECRET`
+- `LOGTO_COOKIE_SECRET`
+- `BASE_URL_PROD`
+- `BASE_URL_DEV`
+- `LOGTO_M2M_CLIENT_ID`
+- `LOGTO_M2M_CLIENT_SECRET`
 
-新增可选项：
+可选：
 
 - `SOCIAL_BINDING_CALLBACK_BASE_URL`
 
-用途：强制社交绑定流程使用该域名生成回调地址：
-
-`{SOCIAL_BINDING_CALLBACK_BASE_URL}/dashboard/connections/social/callback?target=<connectorTarget>`
-
-推荐在以下场景配置：
-
-- 反向代理后端拿到的 `host` 不是最终公网域名
-- 本地/容器环境默认会生成 `localhost`，而第三方平台不允许
-- 需要固定使用一个可在第三方平台白名单注册的统一域名
-
 ---
 
-## 3. 功能配置（config/source/features.yaml）
+## 3. features.yaml
 
-`features.yaml` 主要包含两部分：
+用途：控制账户中心功能开关、社交连接器、资料字段配置。
 
-1. `features`：功能开关
-2. `profileFields`：个人资料字段显示与编辑策略
-
-### 3.1 常见功能开关
+关键路径：
 
 - `features.emailChange.enabled`
 - `features.phoneChange.enabled`
 - `features.usernameChange.enabled`
 - `features.sessions.enabled`
 - `features.accountDeletion.enabled`
-
-### 3.2 社交连接器配置
-
-路径：`features.socialIdentities.config.connectors`
-
-每个连接器支持字段：
-
-- `target`：连接器目标标识（如 `google` / `github` / `qq`）
-- `connectorId`：Logto 控制台中的 connector ID
-- `enabled`：是否展示并允许绑定
-- `displayName`：展示名称
-- `icon`：图标键
-- `description`：描述文案
-
-示例：
-
-```yaml
-features:
-  socialIdentities:
-    enabled: true
-    config:
-      connectors:
-        - target: github
-          connectorId: logto_github_connector_id
-          enabled: true
-          displayName: GitHub
-          icon: github
-          description: 绑定 GitHub 账号
-```
-
-### 3.3 社交绑定 redirect_uri 配置注意事项（重要）
-
-本项目当前采用 **“回调到应用”** 的社交绑定方案。
-
-- 绑定流程会使用：
-  - `{应用域名}/dashboard/connections/social/callback?target=<target>`
-- 第三方平台必须将该回调地址加入白名单（通常至少要求域名 + 路径精确匹配）
-- 若报 `redirect_uri is illegal`，请重点检查：
-  - 协议（http/https）是否一致
-  - 域名是否一致（含子域）
-  - 端口是否一致
-  - 路径是否一致（`/dashboard/connections/social/callback`）
-
-建议：生产环境始终使用 HTTPS + 固定域名，并配置 `SOCIAL_BINDING_CALLBACK_BASE_URL` 避免回退到 localhost。
+- `features.socialIdentities.config.connectors`
+- `profileFields.*`
 
 ---
 
-## 4. 门户服务配置（config/source/services.yaml）
+## 4. services.yaml
 
-包括：
+用途：门户服务分类与服务列表。
 
-- `serviceCategories`：分类定义
-- `services`：服务条目
+关键结构：
 
-每个服务建议包含：
+- `serviceCategories[]`
+- `services[]`
 
-- `id`（唯一）
-- `name`
-- `description`
-- `icon`（建议放 `/public/services/*.svg`）
-- `iconName`
-- `href`（必须是合法 URL）
-- `category`（必须引用已有分类）
-- 可选：`ping`、`isPopular`、`isNew`
+校验要求：
+
+- `href` / `ping` 必须是合法 URL
+- `services[].category` 必须存在于 `serviceCategories[].id`
 
 ---
 
-## 5. 修改后如何生效
+## 5. 生效方式
 
-### 本地
-
-```bash
-npm run config:generate
-npm run dev
-```
-
-或直接运行 `npm run dev`（会自动生成）。
-
-### Docker
-
-配置文件映射在宿主机后，修改完成执行：
+修改配置后执行：
 
 ```bash
 docker compose restart app
 ```
 
-容器启动时会自动重新生成配置并构建。
+容器启动时会执行 runtime config 校验：
+
+- 缺少文件会失败
+- YAML 结构错误会失败
+- 服务分类引用错误会失败
 
 ---
 
-## 6. 常见问题
+## 6. 与代码关系（最新架构）
 
-### Q1: 为什么配置改了没生效？
-
-- 确认改的是 `config/source/*.yaml`，不是 `config/generated/*.ts`
-- 确认已重新执行 `config:generate` 或重启容器
-
-### Q2: YAML 报错怎么办？
-
-- 检查缩进（统一 2 空格）
-- 检查 URL 字段是否为合法 URL
-- 检查枚举值/字段名是否拼写正确
-
-### Q3: 社交绑定总是跳 localhost？
-
-优先检查：
-
-1. 是否设置了 `SOCIAL_BINDING_CALLBACK_BASE_URL`
-2. 代理是否正确透传 `x-forwarded-host` / `x-forwarded-proto`
-3. `BASE_URL_DEV/BASE_URL_PROD` 是否配置为可访问域名
+- Server 侧：运行时从 `CONFIG_DIR` 加载 YAML 并校验
+- Client 侧：通过 `/api/public-config` 获取公开配置
+- 不再建议在 client 组件直接引用 `config/generated/*`
