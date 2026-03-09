@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { deleteUserAccount, getLogtoContext } from "@/app/logto";
+import { deleteUserAccount, getLogtoContext } from "@/lib/logto";
 import { isFeatureEnabled } from "@/config/generated/features";
+import { logger } from "@/lib/logger";
 
 export async function DELETE() {
   try {
@@ -23,7 +24,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Account deletion error:", error);
+    logger.error("Account deletion error", error);
 
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 

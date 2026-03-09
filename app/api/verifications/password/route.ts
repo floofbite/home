@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAccessTokenRSC } from "@/app/logto";
+import { getAccessTokenRSC, logtoConfig } from "@/lib/logto";
+import { PasswordVerificationSchema } from "@/lib/schemas";
+import { logger } from "@/lib/logger";
 
 /**
  * 验证用户密码，获取验证记录 ID
@@ -19,20 +21,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { password } = body;
+    const body = await request.json().catch(() => ({}));
+    const parseResult = PasswordVerificationSchema.safeParse(body);
 
-    if (!password) {
-      return NextResponse.json(
-        { error: "缺少密码参数" },
-        { status: 400 }
-      );
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "缺少或无效的密码参数" }, { status: 400 });
     }
 
-    const logtoEndpoint = process.env.LOGTO_ENDPOINT;
+    const { password } = parseResult.data;
 
     const res = await fetch(
-      `${logtoEndpoint}/api/verifications/password`,
+      `${logtoConfig.endpoint}/api/verifications/password`,
       {
         method: "POST",
         headers: {
@@ -45,7 +44,10 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("Password verification error:", res.status, errorText);
+      logger.warn("Password verification upstream failed", {
+        status: res.status,
+        errorText,
+      });
       return NextResponse.json(
         { error: "密码验证失败" },
         { status: res.status }
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Password verification error:", error);
+    logger.error("Password verification route error", error);
     return NextResponse.json(
       { error: "密码验证失败" },
       { status: 500 }

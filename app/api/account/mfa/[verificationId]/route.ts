@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getAccessTokenRSC } from "@/app/logto";
+import { getAccessTokenRSC, logtoConfig } from "@/lib/logto";
+import {
+  MfaVerificationHeaderSchema,
+  MfaVerificationPathSchema,
+  MfaVerificationRenameSchema,
+} from "@/lib/schemas";
+import { logger } from "@/lib/logger";
 
 /**
  * 删除 MFA 验证器
@@ -18,20 +24,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { verificationId } = await params;
-    const verificationRecordId = request.headers.get("logto-verification-id");
+    const pathResult = MfaVerificationPathSchema.safeParse(await params);
+    const headerResult = MfaVerificationHeaderSchema.safeParse({
+      verificationRecordId: request.headers.get("logto-verification-id"),
+    });
 
-    if (!verificationRecordId) {
-      return NextResponse.json(
-        { error: "缺少验证记录 ID" },
-        { status: 400 }
-      );
+    if (!pathResult.success || !headerResult.success) {
+      return NextResponse.json({ error: "缺少或无效的验证参数" }, { status: 400 });
     }
 
-    const logtoEndpoint = process.env.LOGTO_ENDPOINT;
+    const { verificationId } = pathResult.data;
+    const { verificationRecordId } = headerResult.data;
 
     const res = await fetch(
-      `${logtoEndpoint}/api/my-account/mfa-verifications/${verificationId}`,
+      `${logtoConfig.endpoint}/api/my-account/mfa-verifications/${verificationId}`,
       {
         method: "DELETE",
         headers: {
@@ -43,7 +49,10 @@ export async function DELETE(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("Delete MFA verification error:", res.status, errorText);
+      logger.warn("Delete MFA verification upstream failed", {
+        status: res.status,
+        errorText,
+      });
       return NextResponse.json(
         { error: `删除 MFA 验证器失败: ${res.status}` },
         { status: res.status }
@@ -52,7 +61,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete MFA verification error:", error);
+    logger.error("Delete MFA verification route error", error);
     return NextResponse.json(
       { error: "删除 MFA 验证器失败" },
       { status: 500 }
@@ -78,30 +87,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { verificationId } = await params;
-    const verificationRecordId = request.headers.get("logto-verification-id");
+    const pathResult = MfaVerificationPathSchema.safeParse(await params);
+    const headerResult = MfaVerificationHeaderSchema.safeParse({
+      verificationRecordId: request.headers.get("logto-verification-id"),
+    });
+    const bodyResult = MfaVerificationRenameSchema.safeParse(await request.json().catch(() => ({})));
 
-    if (!verificationRecordId) {
-      return NextResponse.json(
-        { error: "缺少验证记录 ID" },
-        { status: 400 }
-      );
+    if (!pathResult.success || !headerResult.success || !bodyResult.success) {
+      return NextResponse.json({ error: "缺少或无效的请求参数" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { name } = body;
-
-    if (!name) {
-      return NextResponse.json(
-        { error: "缺少名称参数" },
-        { status: 400 }
-      );
-    }
-
-    const logtoEndpoint = process.env.LOGTO_ENDPOINT;
+    const { verificationId } = pathResult.data;
+    const { verificationRecordId } = headerResult.data;
+    const { name } = bodyResult.data;
 
     const res = await fetch(
-      `${logtoEndpoint}/api/my-account/mfa-verifications/${verificationId}/name`,
+      `${logtoConfig.endpoint}/api/my-account/mfa-verifications/${verificationId}/name`,
       {
         method: "PATCH",
         headers: {
@@ -115,7 +116,10 @@ export async function PATCH(
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("Update MFA name error:", res.status, errorText);
+      logger.warn("Update MFA name upstream failed", {
+        status: res.status,
+        errorText,
+      });
       return NextResponse.json(
         { error: `更新名称失败: ${res.status}` },
         { status: res.status }
@@ -124,7 +128,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Update MFA name error:", error);
+    logger.error("Update MFA name route error", error);
     return NextResponse.json(
       { error: "更新名称失败" },
       { status: 500 }

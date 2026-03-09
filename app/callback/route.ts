@@ -1,4 +1,4 @@
-import { handleSignIn } from '../logto';
+import { handleSignIn } from "@/lib/logto";
 import { redirect } from 'next/navigation';
 import { NextRequest } from 'next/server';
 

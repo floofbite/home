@@ -116,6 +116,35 @@ export const AccountDeleteSchema = z.object({
 
 export type AccountDeleteInput = z.infer<typeof AccountDeleteSchema>;
 
+// ============ Security/Monitor Schemas ============
+
+export const PasswordVerificationSchema = z.object({
+  password: z.string().min(1, "密码不能为空"),
+});
+
+export const MfaVerificationPathSchema = z.object({
+  verificationId: z.string().min(1, "缺少 MFA 验证器 ID"),
+});
+
+export const MfaVerificationHeaderSchema = z.object({
+  verificationRecordId: z.string().min(1, "缺少验证记录 ID"),
+});
+
+export const MfaVerificationRenameSchema = z.object({
+  name: z.string().min(1, "缺少名称参数"),
+});
+
+export const HealthCheckQuerySchema = z.object({
+  groupName: z.string().min(1, "缺少 groupName 参数"),
+  serviceName: z.string().min(1, "缺少 serviceName 参数"),
+});
+
+export type PasswordVerificationInput = z.infer<typeof PasswordVerificationSchema>;
+export type MfaVerificationPathInput = z.infer<typeof MfaVerificationPathSchema>;
+export type MfaVerificationHeaderInput = z.infer<typeof MfaVerificationHeaderSchema>;
+export type MfaVerificationRenameInput = z.infer<typeof MfaVerificationRenameSchema>;
+export type HealthCheckQueryInput = z.infer<typeof HealthCheckQuerySchema>;
+
 // ============ API Response Schemas ============
 
 export const ApiErrorResponseSchema = z.object({

@@ -1,47 +1,53 @@
 import { NextResponse } from "next/server";
+import { serviceCategories, services } from "@/config/services";
+import { HealthCheckQuerySchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
 
 /**
  * 健康检查代理
- * GET /api/health-check?url=https://example.com
+ * GET /api/health-check?groupName=公开服务&serviceName=Gotify%20推送
  *
- * 用于检查外部服务的可用性，避免前端直接请求遇到的 CORS 问题
+ * 仅允许基于配置中的服务名进行探测，避免用户控制目标 URL
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const url = searchParams.get("url");
+  const parseResult = HealthCheckQuerySchema.safeParse({
+    groupName: searchParams.get("groupName"),
+    serviceName: searchParams.get("serviceName"),
+  });
 
-  if (!url) {
-    return NextResponse.json(
-      { error: "缺少 url 参数" },
-      { status: 400 }
-    );
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "缺少或无效的 groupName/serviceName 参数" }, { status: 400 });
   }
 
-  // 验证 URL 格式
+  const { groupName, serviceName } = parseResult.data;
+  const category = serviceCategories.find((item) => item.name === groupName);
+
+  if (!category) {
+    return NextResponse.json({ error: "未找到对应服务分组" }, { status: 404 });
+  }
+
+  const service = services.find(
+    (item) => item.category === category.id && item.name === serviceName
+  );
+
+  if (!service) {
+    return NextResponse.json({ error: "未找到对应服务" }, { status: 404 });
+  }
+
+  const targetUrl = service.ping || service.href;
+
   try {
-    new URL(url);
-  } catch {
-    return NextResponse.json(
-      { error: "无效的 URL" },
-      { status: 400 }
-    );
-  }
+    const parsedTarget = new URL(targetUrl);
+    if (!["http:", "https:"].includes(parsedTarget.protocol)) {
+      return NextResponse.json({ error: "目标服务地址协议不受支持" }, { status: 400 });
+    }
 
-  // 只允许 http 和 https 协议
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return NextResponse.json(
-      { error: "只允许 http 和 https 协议" },
-      { status: 400 }
-    );
-  }
-
-  try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const startTime = Date.now();
-    const response = await fetch(url, {
+    const response = await fetch(parsedTarget.toString(), {
       method: "HEAD",
       signal: controller.signal,
       // 不跟随重定向，只检查是否可达
@@ -55,12 +61,15 @@ export async function GET(request: Request) {
     const isOnline = response.status < 400;
 
     return NextResponse.json({
+      groupName,
+      serviceName,
+      serviceId: service.id,
       status: isOnline ? "online" : "offline",
       statusCode: response.status,
       latency,
     });
   } catch (error) {
-    logger.debug(`Health check failed for ${url}:`, error);
+    logger.debug(`Health check failed for ${service.id}:`, error);
 
     // 超时或网络错误
     return NextResponse.json(
