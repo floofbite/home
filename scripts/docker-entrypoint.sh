@@ -45,7 +45,7 @@ if [ ! -f "${FEATURES_CONFIG}" ]; then
 fi
 
 echo "[entrypoint] Validating runtime config"
-node ./scripts/validate-runtime-config.mjs
+node ./scripts/validate-runtime-config.bundle.mjs
 
 echo "[entrypoint] Starting Next.js server on ${HOSTNAME}:${PORT}"
 exec node ./server.js

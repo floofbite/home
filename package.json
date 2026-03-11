@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
+    "build:runtime-validator": "ncc build scripts/validate-runtime-config.mjs -o scripts/dist/runtime-validator",
     "start": "cross-env NODE_ENV=production next start",
     "start:win": "$env:NODE_ENV='production'; next start",
     "lint": "eslint"
@@ -47,6 +48,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vercel/ncc": "^0.38.4",
     "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.12",
