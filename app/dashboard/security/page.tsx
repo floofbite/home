@@ -40,6 +40,15 @@ export default function SecurityPage() {
   const [loading, setLoading] = useState(true);
 
   const runtimeFeatures = runtimeConfig?.features;
+  const logtoEndpoint = runtimeConfig?.logtoEndpoint ?? undefined;
+  const passwordAccountCenterUrl = accountCenterUrls.password("/dashboard/security", logtoEndpoint) ?? undefined;
+  const authenticatorAppUrl = accountCenterUrls.authenticatorApp("/dashboard/security", logtoEndpoint) ?? undefined;
+  const addPasskeyUrl = accountCenterUrls.addPasskey("/dashboard/security", logtoEndpoint) ?? undefined;
+  const managePasskeyUrl = accountCenterUrls.managePasskey("/dashboard/security", logtoEndpoint) ?? undefined;
+  const generateBackupCodesUrl =
+    accountCenterUrls.generateBackupCodes("/dashboard/security", logtoEndpoint) ?? undefined;
+  const manageBackupCodesUrl =
+    accountCenterUrls.manageBackupCodes("/dashboard/security", logtoEndpoint) ?? undefined;
 
   const isFeatureEnabled = useCallback(
     (featureKey: keyof FeaturesConfig, subFeatureKey?: string): boolean => {
@@ -218,12 +227,18 @@ export default function SecurityPage() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" asChild>
-              <a href={accountCenterUrls.password("/dashboard/security")} target="_self">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                {accountInfo?.hasPassword ? t("security.password.changePassword") : t("security.password.setPassword")}
-              </a>
-            </Button>
+            {passwordAccountCenterUrl ? (
+              <Button variant="outline" asChild>
+                <a href={passwordAccountCenterUrl} target="_self">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  {accountInfo?.hasPassword ? t("security.password.changePassword") : t("security.password.setPassword")}
+                </a>
+              </Button>
+            ) : (
+              <Button variant="outline" disabled>
+                {t("security.featureDisabled")}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -262,12 +277,18 @@ export default function SecurityPage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={accountCenterUrls.authenticatorApp("/dashboard/security")} target="_self">
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {mfaStatus.totpEnabled ? t("security.mfa.manage") : t("security.mfa.setup")}
-                    </a>
-                  </Button>
+                  {authenticatorAppUrl ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={authenticatorAppUrl} target="_self">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {mfaStatus.totpEnabled ? t("security.mfa.manage") : t("security.mfa.setup")}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled>
+                      {t("security.featureDisabled")}
+                    </Button>
+                  )}
                 </div>
                 <Separator />
               </>
@@ -293,19 +314,31 @@ export default function SecurityPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={accountCenterUrls.addPasskey("/dashboard/security")} target="_self">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        {mfaStatus.webAuthnEnabled ? t("common.add") : t("security.mfa.setup")}
-                      </a>
-                    </Button>
-                    {mfaStatus.webAuthnEnabled && (
+                    {addPasskeyUrl ? (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={accountCenterUrls.managePasskey("/dashboard/security")} target="_self">
+                        <a href={addPasskeyUrl} target="_self">
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          {t("security.mfa.manage")}
+                          {mfaStatus.webAuthnEnabled ? t("common.add") : t("security.mfa.setup")}
                         </a>
                       </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        {t("security.featureDisabled")}
+                      </Button>
+                    )}
+                    {mfaStatus.webAuthnEnabled && (
+                      managePasskeyUrl ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={managePasskeyUrl} target="_self">
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            {t("security.mfa.manage")}
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled>
+                          {t("security.featureDisabled")}
+                        </Button>
+                      )
                     )}
                   </div>
                 </div>
@@ -335,19 +368,31 @@ export default function SecurityPage() {
                 </div>
                 {mfaStatus.hasOtherMfaMethod ? (
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={accountCenterUrls.generateBackupCodes("/dashboard/security")} target="_self">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        {mfaStatus.backupCodeEnabled ? t("security.mfa.regenerate") : t("security.mfa.generate")}
-                      </a>
-                    </Button>
-                    {mfaStatus.backupCodeEnabled && (
+                    {generateBackupCodesUrl ? (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={accountCenterUrls.manageBackupCodes("/dashboard/security")} target="_self">
+                        <a href={generateBackupCodesUrl} target="_self">
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          {t("security.mfa.manage")}
+                          {mfaStatus.backupCodeEnabled ? t("security.mfa.regenerate") : t("security.mfa.generate")}
                         </a>
                       </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        {t("security.featureDisabled")}
+                      </Button>
+                    )}
+                    {mfaStatus.backupCodeEnabled && (
+                      manageBackupCodesUrl ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={manageBackupCodesUrl} target="_self">
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            {t("security.mfa.manage")}
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled>
+                          {t("security.featureDisabled")}
+                        </Button>
+                      )
                     )}
                   </div>
                 ) : (

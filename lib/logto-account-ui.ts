@@ -3,7 +3,12 @@
  * 文档: https://docs.logto.io/end-user-flows/account-settings/by-account-center-ui
  */
 
-const LOGTO_ENDPOINT = process.env.NEXT_PUBLIC_LOGTO_ENDPOINT || process.env.LOGTO_ENDPOINT;
+function resolveLogtoEndpoint(explicitEndpoint?: string): string | null {
+  const endpoint = explicitEndpoint ?? process.env.NEXT_PUBLIC_LOGTO_ENDPOINT ?? process.env.LOGTO_ENDPOINT;
+  const baseUrl = endpoint?.replace(/\/$/, "");
+
+  return baseUrl || null;
+}
 
 /**
  * 生成 Account Center UI URL
@@ -11,15 +16,16 @@ const LOGTO_ENDPOINT = process.env.NEXT_PUBLIC_LOGTO_ENDPOINT || process.env.LOG
  * @param redirectPath - 完成后跳转回的页面路径 (可选，默认当前页面)
  * @returns 完整的 URL
  */
-export function getAccountCenterUrl(path: string, redirectPath?: string): string {
-  const baseUrl = LOGTO_ENDPOINT?.replace(/\/$/, "");
+export function getAccountCenterUrl(path: string, redirectPath?: string, endpoint?: string): string | null {
+  const baseUrl = resolveLogtoEndpoint(endpoint);
   if (!baseUrl) {
-    throw new Error("Logto endpoint is not configured");
+    return null;
   }
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-  const redirect = redirectPath 
-    ? `${window.location.origin}${redirectPath}`
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const redirect = redirectPath
+    ? `${origin}${redirectPath}`
     : currentUrl;
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
@@ -31,23 +37,26 @@ export function getAccountCenterUrl(path: string, redirectPath?: string): string
 // 快捷方法
 export const accountCenterUrls = {
   /** 更新邮箱 */
-  email: (redirect?: string) => getAccountCenterUrl("/account/email", redirect),
+  email: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/email", redirect, endpoint),
   /** 更新手机号 */
-  phone: (redirect?: string) => getAccountCenterUrl("/account/phone", redirect),
+  phone: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/phone", redirect, endpoint),
   /** 更新用户名 */
-  username: (redirect?: string) => getAccountCenterUrl("/account/username", redirect),
+  username: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/username", redirect, endpoint),
   /** 更新密码 */
-  password: (redirect?: string) => getAccountCenterUrl("/account/password", redirect),
+  password: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/password", redirect, endpoint),
   /** 设置 TOTP 验证器 */
-  authenticatorApp: (redirect?: string) => getAccountCenterUrl("/account/authenticator-app", redirect),
+  authenticatorApp: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/authenticator-app", redirect, endpoint),
   /** 生成备份码 */
-  generateBackupCodes: (redirect?: string) => getAccountCenterUrl("/account/backup-codes/generate", redirect),
+  generateBackupCodes: (redirect?: string, endpoint?: string) =>
+    getAccountCenterUrl("/account/backup-codes/generate", redirect, endpoint),
   /** 管理备份码 */
-  manageBackupCodes: (redirect?: string) => getAccountCenterUrl("/account/backup-codes/manage", redirect),
+  manageBackupCodes: (redirect?: string, endpoint?: string) =>
+    getAccountCenterUrl("/account/backup-codes/manage", redirect, endpoint),
   /** 添加 Passkey */
-  addPasskey: (redirect?: string) => getAccountCenterUrl("/account/passkey/add", redirect),
+  addPasskey: (redirect?: string, endpoint?: string) => getAccountCenterUrl("/account/passkey/add", redirect, endpoint),
   /** 管理 Passkey */
-  managePasskey: (redirect?: string) => getAccountCenterUrl("/account/passkey/manage", redirect),
+  managePasskey: (redirect?: string, endpoint?: string) =>
+    getAccountCenterUrl("/account/passkey/manage", redirect, endpoint),
 };
 
 /**

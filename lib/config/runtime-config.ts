@@ -253,6 +253,7 @@ export const configHash = runtimeData.configHash;
 
 export function getPublicRuntimeConfig(): PublicRuntimeConfig {
   return {
+    logtoEndpoint: process.env.LOGTO_ENDPOINT ?? null,
     features,
     profileFields,
     serviceCategories,

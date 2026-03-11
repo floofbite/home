@@ -70,6 +70,7 @@ export interface Service {
 }
 
 export interface PublicRuntimeConfig {
+  logtoEndpoint: string | null;
   features: FeaturesConfig;
   profileFields: ProfileFieldsConfig;
   serviceCategories: ServiceCategory[];

@@ -68,6 +68,10 @@ export default function ProfilePage() {
 
   const runtimeFeatures = runtimeConfig?.features;
   const runtimeProfileFields = runtimeConfig?.profileFields;
+  const logtoEndpoint = runtimeConfig?.logtoEndpoint ?? undefined;
+  const emailAccountCenterUrl = accountCenterUrls.email("/dashboard/profile", logtoEndpoint) ?? undefined;
+  const phoneAccountCenterUrl = accountCenterUrls.phone("/dashboard/profile", logtoEndpoint) ?? undefined;
+  const usernameAccountCenterUrl = accountCenterUrls.username("/dashboard/profile", logtoEndpoint) ?? undefined;
 
   const isFeatureEnabled = useCallback(
     (featureKey: keyof FeaturesConfig, subFeatureKey?: string): boolean => {
@@ -413,12 +417,12 @@ export default function ProfilePage() {
                  </p>
                </div>
              </div>
-             {isFeatureEnabled("emailChange") ? (
-               <Button variant="outline" size="sm" asChild>
-                 <a href={accountCenterUrls.email("/dashboard/profile")} target="_self">
-                   <ExternalLink className="mr-2 h-4 w-4" />
-                   {accountInfo?.primaryEmail ? t("common.edit") : t("common.add")}
-                 </a>
+              {isFeatureEnabled("emailChange") && emailAccountCenterUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={emailAccountCenterUrl} target="_self">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {accountInfo?.primaryEmail ? t("common.edit") : t("common.add")}
+                  </a>
                </Button>
              ) : (
                <Button variant="outline" size="sm" disabled>
@@ -440,12 +444,12 @@ export default function ProfilePage() {
                  </p>
                </div>
              </div>
-             {isFeatureEnabled("phoneChange") ? (
-               <Button variant="outline" size="sm" asChild>
-                 <a href={accountCenterUrls.phone("/dashboard/profile")} target="_self">
-                   <ExternalLink className="mr-2 h-4 w-4" />
-                   {accountInfo?.primaryPhone ? t("common.edit") : t("common.add")}
-                 </a>
+              {isFeatureEnabled("phoneChange") && phoneAccountCenterUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={phoneAccountCenterUrl} target="_self">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {accountInfo?.primaryPhone ? t("common.edit") : t("common.add")}
+                  </a>
                </Button>
              ) : (
                <Button variant="outline" size="sm" disabled>
@@ -467,12 +471,12 @@ export default function ProfilePage() {
                  </p>
                </div>
              </div>
-             {isFeatureEnabled("usernameChange") ? (
-               <Button variant="outline" size="sm" asChild>
-                 <a href={accountCenterUrls.username("/dashboard/profile")} target="_self">
-                   <ExternalLink className="mr-2 h-4 w-4" />
-                   {t("common.edit")}
-                 </a>
+              {isFeatureEnabled("usernameChange") && usernameAccountCenterUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={usernameAccountCenterUrl} target="_self">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t("common.edit")}
+                  </a>
                </Button>
              ) : (
                <Button variant="outline" size="sm" disabled>
