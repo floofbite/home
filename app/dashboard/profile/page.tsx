@@ -160,6 +160,7 @@ export default function ProfilePage() {
        }
 
       await fetchData();
+      router.refresh();
 
       setFormStates((prev) => ({
         ...prev,

@@ -25,9 +25,9 @@ export default async function DashboardLayout({
   }
 
   const user = {
-    name: claims?.name || accountInfo?.name,
-    username: claims?.username || accountInfo?.username,
-    email: claims?.email || accountInfo?.primaryEmail,
+    name: accountInfo?.name ?? claims?.name ?? undefined,
+    username: accountInfo?.username ?? claims?.username ?? undefined,
+    email: accountInfo?.primaryEmail ?? claims?.email ?? undefined,
     avatar: accountInfo?.avatar ?? claims?.picture ?? undefined,
   };
 

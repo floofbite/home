@@ -18,7 +18,7 @@ import {
   Key,
   Globe,
 } from "lucide-react";
-import { formatDate, formatRelativeTime } from "@/lib/utils";
+import { normalizeLocale, t as translate } from "@/lib/i18n";
 
 export default async function DashboardPage() {
   const { isAuthenticated, claims } = await getLogtoContext();
@@ -39,6 +39,46 @@ export default async function DashboardPage() {
   }
 
   const displayInfo = accountInfo && !("error" in accountInfo) ? accountInfo : null;
+  const locale = normalizeLocale(displayInfo?.profile?.locale);
+  const tt = (key: string, params?: Record<string, string>) => translate(key, locale, params);
+  const displayName = displayInfo?.name || claims?.name || displayInfo?.username || claims?.username || tt("common.user");
+
+  const formatDate = (date: string | number | Date): string =>
+    new Date(date).toLocaleString(locale === "en" ? "en-US" : "zh-CN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const formatRelativeTime = (date: string | number | Date): string => {
+    const now = new Date().getTime();
+    const target = new Date(date).getTime();
+    const seconds = Math.floor((now - target) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 30) {
+      return formatDate(date);
+    }
+
+    if (days > 0) {
+      return tt("security.timeAgo.daysAgo", { count: String(days) });
+    }
+
+    if (hours > 0) {
+      return tt("security.timeAgo.hoursAgo", { count: String(hours) });
+    }
+
+    if (minutes > 0) {
+      return tt("security.timeAgo.minutesAgo", { count: String(minutes) });
+    }
+
+    return tt("security.timeAgo.justNow");
+  };
+
   const hasMfa = mfaVerifications.length > 0;
   const socialCount = socialIdentities.socialIdentities.length;
 
@@ -48,7 +88,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">账户概览</h1>
         <p className="text-muted-foreground">
-          管理您的账户信息、安全设置和个性化偏好
+          {tt("dashboard.description")}
         </p>
       </div>
 
@@ -60,19 +100,19 @@ export default async function DashboardPage() {
               {(displayInfo?.avatar || claims?.picture) && (
                 <AvatarImage 
                   src={displayInfo?.avatar || claims?.picture || ""} 
-                  alt={claims?.name || claims?.username || "用户"} 
+                  alt={displayName}
                 />
               )}
               <AvatarFallback className="bg-white/20 text-xl font-bold text-white">
-                {claims?.name?.charAt(0) || claims?.username?.charAt(0) || "U"}
+                {displayName.charAt(0) || tt("common.userInitial")}
               </AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-xl font-semibold">
-                欢迎回来，{claims?.name || claims?.username || "用户"}
+                {tt("dashboard.welcome")}，{displayName}
               </h2>
               <p className="text-white/80">
-                上次登录: {displayInfo?.lastSignInAt ? formatRelativeTime(displayInfo.lastSignInAt) : "未知"}
+                {tt("dashboard.lastSignIn")}: {displayInfo?.lastSignInAt ? formatRelativeTime(displayInfo.lastSignInAt) : tt("service.status.unknown")}
               </p>
             </div>
           </div>
@@ -84,8 +124,8 @@ export default async function DashboardPage() {
                 <Mail className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">邮箱</p>
-                <p className="font-medium">{displayInfo?.primaryEmail || "未设置"}</p>
+                <p className="text-sm text-muted-foreground">{tt("dashboard.email")}</p>
+                <p className="font-medium">{displayInfo?.primaryEmail || tt("profile.notSet")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -93,8 +133,8 @@ export default async function DashboardPage() {
                 <Smartphone className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">手机</p>
-                <p className="font-medium">{displayInfo?.primaryPhone || "未设置"}</p>
+                <p className="text-sm text-muted-foreground">{tt("dashboard.phone")}</p>
+                <p className="font-medium">{displayInfo?.primaryPhone || tt("profile.notSet")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -102,9 +142,9 @@ export default async function DashboardPage() {
                 <Key className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">密码</p>
+                <p className="text-sm text-muted-foreground">{tt("dashboard.password")}</p>
                 <Badge variant={displayInfo?.hasPassword ? "default" : "secondary"}>
-                  {displayInfo?.hasPassword ? "已设置" : "未设置"}
+                  {displayInfo?.hasPassword ? tt("dashboard.passwordSet") : tt("dashboard.passwordNotSet")}
                 </Badge>
               </div>
             </div>
@@ -113,7 +153,7 @@ export default async function DashboardPage() {
                 <Calendar className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">注册时间</p>
+                <p className="text-sm text-muted-foreground">{tt("dashboard.registerTime")}</p>
                 <p className="font-medium">
                   {displayInfo?.createdAt ? formatDate(displayInfo.createdAt).split(" ")[0] : "-"}
                 </p>
@@ -131,12 +171,12 @@ export default async function DashboardPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900/30">
                 <UserCircle className="h-5 w-5" />
               </div>
-              <CardTitle className="pt-3">个人资料</CardTitle>
-              <CardDescription>编辑您的个人信息和头像</CardDescription>
+               <CardTitle className="pt-3">{tt("dashboard.quickActions.profile")}</CardTitle>
+               <CardDescription>{tt("dashboard.quickActions.profileDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="ghost" size="sm" className="gap-1 px-0 group-hover:gap-2 transition-all">
-                查看详情 <ArrowRight className="h-4 w-4" />
+                 {tt("common.next")} <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -148,12 +188,12 @@ export default async function DashboardPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-colors group-hover:bg-green-600 group-hover:text-white dark:bg-green-900/30">
                 <Shield className="h-5 w-5" />
               </div>
-              <CardTitle className="pt-3">安全设置</CardTitle>
-              <CardDescription>管理密码和双因素认证</CardDescription>
+               <CardTitle className="pt-3">{tt("dashboard.quickActions.security")}</CardTitle>
+               <CardDescription>{tt("dashboard.quickActions.securityDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="ghost" size="sm" className="gap-1 px-0 group-hover:gap-2 transition-all">
-                查看详情 <ArrowRight className="h-4 w-4" />
+                 {tt("common.next")} <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -165,12 +205,12 @@ export default async function DashboardPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-900/30">
                 <Link2 className="h-5 w-5" />
               </div>
-              <CardTitle className="pt-3">社交连接</CardTitle>
-              <CardDescription>绑定第三方账号快捷登录</CardDescription>
+               <CardTitle className="pt-3">{tt("dashboard.quickActions.connections")}</CardTitle>
+               <CardDescription>{tt("dashboard.quickActions.connectionsDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="ghost" size="sm" className="gap-1 px-0 group-hover:gap-2 transition-all">
-                查看详情 <ArrowRight className="h-4 w-4" />
+                 {tt("common.next")} <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -182,12 +222,12 @@ export default async function DashboardPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white dark:bg-orange-900/30">
                 <Globe className="h-5 w-5" />
               </div>
-              <CardTitle className="pt-3">服务门户</CardTitle>
-              <CardDescription>访问所有已接入的服务</CardDescription>
+               <CardTitle className="pt-3">{tt("dashboard.quickActions.portal")}</CardTitle>
+               <CardDescription>{tt("dashboard.quickActions.portalDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="ghost" size="sm" className="gap-1 px-0 group-hover:gap-2 transition-all">
-                进入门户 <ArrowRight className="h-4 w-4" />
+                 {tt("portal.enterAccountCenter").replace("Account Center", tt("dashboard.quickActions.portal"))} <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -197,29 +237,29 @@ export default async function DashboardPage() {
       {/* Security Status */}
       <Card>
         <CardHeader>
-          <CardTitle>安全状态</CardTitle>
-          <CardDescription>您的账户安全状况概览</CardDescription>
+          <CardTitle>{tt("dashboard.securityStatus.title")}</CardTitle>
+          <CardDescription>{tt("security.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Key className="h-5 w-5 text-muted-foreground" />
-                <span>登录密码</span>
+                <span>{tt("dashboard.securityStatus.loginPassword")}</span>
               </div>
               <Badge variant={displayInfo?.hasPassword ? "default" : "destructive"}>
-                {displayInfo?.hasPassword ? "已设置" : "未设置"}
+                {displayInfo?.hasPassword ? tt("dashboard.passwordSet") : tt("dashboard.passwordNotSet")}
               </Badge>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground" />
-                <span>双因素认证</span>
+                <span>{tt("dashboard.securityStatus.mfa")}</span>
               </div>
               <Link href="/dashboard/security">
                 <Badge variant={hasMfa ? "default" : "secondary"} className="cursor-pointer hover:bg-primary/90">
-                  {hasMfa ? `已设置 (${mfaVerifications.length} 个)` : "未设置"}
+                  {hasMfa ? tt("security.mfa.mfaSetCount", { count: String(mfaVerifications.length) }) : tt("dashboard.passwordNotSet")}
                 </Badge>
               </Link>
             </div>
@@ -227,11 +267,11 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link2 className="h-5 w-5 text-muted-foreground" />
-                <span>社交账号绑定</span>
+                <span>{tt("dashboard.securityStatus.socialBinding")}</span>
               </div>
               <Link href="/dashboard/connections">
                 <Badge variant={socialCount > 0 ? "default" : "secondary"} className="cursor-pointer hover:bg-primary/90">
-                  {socialCount > 0 ? `已绑定 ${socialCount} 个` : "未绑定"}
+                  {socialCount > 0 ? tt("connections.connectedBadge") : tt("profile.notSet")}
                 </Badge>
               </Link>
             </div>

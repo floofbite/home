@@ -1,6 +1,22 @@
 # Logto Account Center & Portal
 
-基于 **Next.js 15（App Router）** + **Logto** 的账户中心与服务门户。
+基于 **Next.js 15（App Router）** + **Logto** 的账户中心与服务门户。前端页面使用 **shadcn/ui** 构建。
+
+## 零、UI Preview
+
+Dark Mode:
+
+![dark mode](docs/assets/overview1.png)
+
+Light Mode:
+
+![light mode](docs/assets/overview2.png)
+
+Portal Page(Light)
+
+![portal page](docs/assets/overview3.png)
+
+---
 
 ## 一、配置约定
 
@@ -103,7 +119,7 @@ docker compose logs -f app
 ## 五、项目特色
 
 - **统一配置模型**：开发与部署都使用 `.env + deploy/*.yaml`
-- **运行时配置加载**：无需 YAML 生成 TS，配置修改后重启容器即可生效
+- **运行时配置加载**：配置修改后重启容器即可生效
 - **配置校验内建**：容器启动前自动校验 env/yaml，减少线上配置错误
 - **认证边界清晰**：区分用户 Token 与 M2M Token，降低权限误用风险
 - **前后端解耦**：Client 通过 `/api/public-config` 获取公开配置
