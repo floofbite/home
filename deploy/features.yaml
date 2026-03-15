@@ -34,44 +34,29 @@ features:
       connectors:
         - target: google
           connectorId: logto_google_connector_id
-          enabled: false
+          enabled: true
           displayName: Google
           icon: google
-          description: 绑定 Google 账号
+          description: Google
         - target: github
           connectorId: logto_github_connector_id
-          enabled: true
+          enabled: false
           displayName: GitHub
           icon: github
-          description: 绑定 GitHub 账号
-        - target: qq
-          connectorId: logto_qq_connector_id
-          enabled: true
-          displayName: QQ
-          icon: qq
-          description: 绑定 QQ 账号
-
-        # 下面是更多平台示例（按需启用）
+          description: GitHub
         # - target: apple
         #   connectorId: logto_apple_connector_id
         #   enabled: false
         #   displayName: Apple
         #   icon: apple
-        #   description: 绑定 Apple 账号
+        #   description: Apple
         #
-        # - target: discord
-        #   connectorId: logto_discord_connector_id
-        #   enabled: false
-        #   displayName: Discord
-        #   icon: discord
-        #   description: 绑定 Discord 账号
-        #
-        # - target: wechat
-        #   connectorId: logto_wechat_connector_id
-        #   enabled: false
-        #   displayName: 微信
-        #   icon: wechat
-        #   description: 绑定微信账号
+        - target: discord
+          connectorId: 9f2n8c8uofrqb7c4dxnmc
+          enabled: true
+          displayName: Discord
+          icon: discord
+          description: Discord
 
   sessions:
     enabled: true
@@ -85,23 +70,23 @@ features:
 profileFields:
   avatar:
     enabled: true
-    label: 头像
-    description: 您的个人头像
+    label: Profile picture
+    description: Choose your profile image
     placeholder: https://example.com/avatar.jpg
     inputType: url
 
   name:
     enabled: true
-    label: 显示名称
-    description: 您的公开显示名称
-    placeholder: 输入您的姓名
+    label: Display name
+    description: You can change it later
+    placeholder: John
     inputType: text
     required: true
 
   birthdate:
-    enabled: false
-    label: 出生日期
-    description: 您的生日信息
+    enabled: true
+    label: Birthday
+    description: Your birthday and age
     inputType: date
 
   zoneinfo:
@@ -112,15 +97,15 @@ profileFields:
     inputType: text
 
   locale:
-    enabled: false
-    label: 语言
-    description: 界面语言偏好
-    placeholder: zh-CN
+    enabled: true
+    label: Language
+    description: Your language
+    placeholder: en-US
     inputType: text
 
   website:
     enabled: false
-    label: 个人网站
+    label: Website
     description: 您的个人主页链接
     placeholder: https://example.com
     inputType: url
