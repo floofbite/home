@@ -50,7 +50,17 @@ export function readStoredLanguage(): Language {
   }
 
   const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  return normalizeLocale(stored);
+  if (stored) {
+    return normalizeLocale(stored);
+  }
+
+  const preferred = Array.isArray(window.navigator.languages)
+    ? window.navigator.languages.find(Boolean)
+    : window.navigator.language;
+
+  const detected = normalizeLocale(preferred);
+  saveLanguage(detected);
+  return detected;
 }
 
 export function saveLanguage(language: Language): void {
