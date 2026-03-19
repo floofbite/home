@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
     ],
     dangerouslyAllowSVG: true,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["id.floofbite.com"]
+    }
+  },
+  // This helps Next.js understand it's behind a proxy
+  trustHost: true,
 };
 
 export default nextConfig;
