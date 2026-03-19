@@ -100,7 +100,7 @@ export default function PortalPage() {
     }
 
     try {
-      const response = await fetch("/api/health-check", { cache: "no-store" });
+      const response = await fetch("/me/api/health-check", { cache: "no-store" });
       if (!response.ok) {
         return;
       }
