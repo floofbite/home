@@ -206,7 +206,7 @@ export default function ConnectionsPage() {
 
     try {
       const res = await fetch(
-        `/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
+        `/me/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },

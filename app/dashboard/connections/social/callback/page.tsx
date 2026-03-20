@@ -113,7 +113,7 @@ export default function SocialCallbackPage() {
           description: "社交账号已成功绑定",
         });
 
-        router.replace("/me/dashboard/connections?show_success=social");
+        router.replace("/dashboard/connections?show_success=social");
       } catch (error) {
         if (!active) return;
 
@@ -128,7 +128,7 @@ export default function SocialCallbackPage() {
           description: error instanceof Error ? error.message : "未知错误",
         });
 
-        router.replace("/me/dashboard/connections");
+        router.replace("/dashboard/connections");
       } finally {
         if (active) {
           setSubmitting(false);
@@ -176,7 +176,7 @@ export default function SocialCallbackPage() {
         description: "社交账号已成功绑定",
       });
 
-      router.replace("/me/dashboard/connections?show_success=social");
+      router.replace("/dashboard/connections?show_success=social");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -215,7 +215,7 @@ export default function SocialCallbackPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.replace("/me/dashboard/connections")}
+                  onClick={() => router.replace("/dashboard/connections")}
                   disabled={submitting}
                 >
                   取消

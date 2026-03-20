@@ -18,7 +18,7 @@ export default function SocialConnectPage({
 
     const startBinding = async () => {
       try {
-        const res = await fetch("/me/api/account/identities/social/start", {
+        const res = await fetch("/api/account/identities/social/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ target }),
@@ -46,7 +46,7 @@ export default function SocialConnectPage({
           description: error instanceof Error ? error.message : "未知错误",
         });
 
-        router.replace("/me/dashboard/connections");
+        router.replace("/dashboard/connections");
       }
     };
 
