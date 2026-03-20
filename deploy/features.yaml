@@ -51,7 +51,7 @@ features:
         #   icon: apple
         #   description: Apple
         #
-        - target: discord
+        - target: 9f2n8c8uofrqb7c4dxnmc
           connectorId: 9f2n8c8uofrqb7c4dxnmc
           enabled: true
           displayName: Discord
@@ -62,7 +62,7 @@ features:
     enabled: true
 
   accountDeletion:
-    enabled: true
+    enabled: false
     config:
       requirePasswordConfirmation: true
       requireConfirmationText: true
