@@ -195,7 +195,7 @@ export default function ConnectionsPage() {
   }, [searchParams, toast, t]);
 
   const handleConnectSocial = (target: string) => {
-    router.push(`/me/dashboard/connections/social/${encodeURIComponent(target)}`);
+    router.push(`/dashboard/connections/social/${encodeURIComponent(target)}`);
   };
 
   const handleUnlinkSocial = async (identityVerificationId?: string) => {
@@ -206,7 +206,7 @@ export default function ConnectionsPage() {
 
     try {
       const res = await fetch(
-        `/me/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
+        `/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
