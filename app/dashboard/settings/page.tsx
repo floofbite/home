@@ -86,7 +86,7 @@ export default function SettingsPage() {
 
     try {
       // 调用 API 更新到 OIDC profile 的 locale 字段
-      const res = await fetch("/api/account/profile/details", {
+      const res = await fetch("/me/api/account/profile/details", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale: value }),
@@ -125,7 +125,7 @@ export default function SettingsPage() {
     setDeleteDialog((prev) => ({ ...prev, deleting: true }));
 
     try {
-      const res = await fetch("/api/account/delete", {
+      const res = await fetch("/me/api/account/delete", {
         method: "DELETE",
       });
 

@@ -153,7 +153,7 @@ export default function ConnectionsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/account/identities");
+      const res = await fetch("/me/api/account/identities");
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -195,7 +195,7 @@ export default function ConnectionsPage() {
   }, [searchParams, toast, t]);
 
   const handleConnectSocial = (target: string) => {
-    router.push(`/dashboard/connections/social/${encodeURIComponent(target)}`);
+    router.push(`/me/dashboard/connections/social/${encodeURIComponent(target)}`);
   };
 
   const handleUnlinkSocial = async (identityVerificationId?: string) => {
@@ -206,7 +206,7 @@ export default function ConnectionsPage() {
 
     try {
       const res = await fetch(
-        `/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
+        `/me/api/account/identities?target=${encodeURIComponent(unlinkDialog.target)}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -267,7 +267,7 @@ export default function ConnectionsPage() {
     setUnlinking(true);
 
     try {
-      const verifyRes = await fetch("/api/verifications/password", {
+      const verifyRes = await fetch("/me/api/verifications/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: unlinkPassword }),
@@ -514,8 +514,8 @@ export default function ConnectionsPage() {
                 unlinkRequiresReAuth
                   ? handleUnlinkWithPassword
                   : () => {
-                      void handleUnlinkSocial();
-                    }
+                    void handleUnlinkSocial();
+                  }
               }
               disabled={unlinking}
             >
