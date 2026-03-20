@@ -46,7 +46,7 @@ export default function SocialConnectPage({
           description: error instanceof Error ? error.message : "未知错误",
         });
 
-        router.replace("/dashboard/connections");
+        router.replace("/me/dashboard/connections");
       }
     };
 
