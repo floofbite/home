@@ -86,9 +86,9 @@ export default function SecurityPage() {
         isFeatureEnabled("passkey");
 
       const [accountRes, historyRes, mfaRes] = await Promise.all([
-        fetch("/api/account-info"),
-        isFeatureEnabled("sessions") ? fetch("/api/account/sessions") : Promise.resolve(null),
-        shouldFetchMfa ? fetch("/api/account/mfa") : Promise.resolve(null),
+        fetch("/me/api/account-info"),
+        isFeatureEnabled("sessions") ? fetch("/me/api/account/sessions") : Promise.resolve(null),
+        shouldFetchMfa ? fetch("/me/api/account/mfa") : Promise.resolve(null),
       ]);
 
       if (!accountRes.ok) {
@@ -171,16 +171,16 @@ export default function SecurityPage() {
   // 注意：Logto API 返回的 type 字段可能是 "Totp", "WebAuthn", "BackupCode"
   // 但实际返回的值可能大小写不同，这里使用大小写不敏感的匹配
   const getMfaStatus = () => {
-    const totpEnabled = mfaVerifications.some(v => 
+    const totpEnabled = mfaVerifications.some(v =>
       v.type?.toLowerCase() === "totp"
     );
-    const webAuthnEnabled = mfaVerifications.some(v => 
+    const webAuthnEnabled = mfaVerifications.some(v =>
       v.type?.toLowerCase() === "webauthn"
     );
-    const backupCodeEnabled = mfaVerifications.some(v => 
+    const backupCodeEnabled = mfaVerifications.some(v =>
       v.type?.toLowerCase() === "backupcode"
     );
-    
+
     return {
       hasMfa: mfaVerifications.length > 0,
       totpEnabled,
@@ -217,7 +217,7 @@ export default function SecurityPage() {
     setTotpRemovalDialog((prev) => ({ ...prev, removing: true }));
 
     try {
-      const verifyRes = await fetch("/api/verifications/password", {
+      const verifyRes = await fetch("/me/api/verifications/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: totpRemovalDialog.password }),
@@ -230,7 +230,7 @@ export default function SecurityPage() {
       }
 
       const deleteRes = await fetch(
-        `/api/account/mfa/${encodeURIComponent(totpVerification.id)}`,
+        `/me/api/account/mfa/${encodeURIComponent(totpVerification.id)}`,
         {
           method: "DELETE",
           headers: {
@@ -343,7 +343,7 @@ export default function SecurityPage() {
               <CardTitle>{t("security.mfa.title")}</CardTitle>
             </div>
             <CardDescription>
-              {mfaStatus.hasMfa 
+              {mfaStatus.hasMfa
                 ? t("security.mfa.mfaSetCount", { count: String(mfaVerifications.length) })
                 : t("security.mfa.description")}
             </CardDescription>
@@ -362,7 +362,7 @@ export default function SecurityPage() {
                     <div>
                       <p className="font-medium">{t("security.mfa.totp")}</p>
                       <p className="text-sm text-muted-foreground">
-                        {mfaStatus.totpEnabled 
+                        {mfaStatus.totpEnabled
                           ? t("security.mfa.totpEnabled")
                           : t("security.mfa.totpDesc")}
                       </p>
